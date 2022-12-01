@@ -16,7 +16,7 @@
 #include <mutex>
 
 // Log text
-#define IS_RELEASE 1
+#define IS_RELEASE 0
 
 static const SocketInitConfig sockInitConf = {
     .bsdsockets_version = 1,
@@ -111,9 +111,14 @@ extern "C" {
         if (R_FAILED(rc))
             fatalThrow(MAKERESULT(Module_Libnx, LibnxError_InitFail_FS));
 
-        rc = hiddbgAttachHdlsWorkBuffer();
+        static HiddbgHdlsSessionId* controllerSessionID = new HiddbgHdlsSessionId;
+        rc = hiddbgAttachHdlsWorkBuffer(controllerSessionID);
         if (R_FAILED(rc))
             fatalThrow(MAKERESULT(Module_Libnx, LibnxError_InitFail_HID));
+
+        char* buffer = (char*)malloc(sizeof(u64) + 20);
+        sprintf(buffer, "session id is %ld", controllerSessionID->id);
+        printToFile(buffer);
 
         rc = pmdmntInitialize();
         if (R_FAILED(rc)) 
@@ -155,10 +160,20 @@ static Mutex fileMutex;
 int printToFile(const char* myString)
 {
     #if IS_RELEASE == 0
+    time_t currenttime = time(0);
+    tm* timeinfo;
+    timeinfo = localtime(&currenttime);
+
+    char* outtime = new char[72]; // don't really care about buffer overflows lol
+    
+    sprintf(outtime, "%02d/%02d/%d %02d:%02d:%02d", timeinfo->tm_mon + 1,
+            timeinfo->tm_mday, timeinfo->tm_year + 1900,
+            timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
+
     mutexLock(&fileMutex);
-    FILE *log = fopen("/hidplus/log.txt", "w+a");
+    FILE *log = fopen("/hidplus/log.txt", "a+t");
     if (log != nullptr) {
-            fprintf(log, "%s\n", myString);
+            fprintf(log, "[%s] %s\n", outtime, myString);
             fclose(log);
     }
     mutexUnlock(&fileMutex);

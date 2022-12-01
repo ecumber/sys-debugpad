@@ -17,29 +17,29 @@ int FakeController::initialize(u16 conDeviceType)
     switch(conDeviceType)
     {
         case 1:
-            controllerDevice.deviceType = HidDeviceType_FullKey3; // Pro Controller
+            controllerDevice.deviceType = HidDeviceType_DebugPad; // Pro Controller
             break;
         
         case 2:
-            controllerDevice.deviceType = HidDeviceType_JoyLeft2; // Joy-Con Left
+            controllerDevice.deviceType = HidDeviceType_DebugPad; // Joy-Con Left
             break;
 
         case 3:
-            controllerDevice.deviceType = HidDeviceType_JoyRight1; // Joy-Con Right
+            controllerDevice.deviceType = HidDeviceType_DebugPad; // Joy-Con Right
             break;
 
     }
 
     // Set the controller colors. The grip colors are for Pro-Controller on [9.0.0+].
-    controllerDevice.singleColorBody = RGBA8_MAXALPHA(255,153,204);
+    controllerDevice.singleColorBody = RGBA8_MAXALPHA(255,0,220);
     controllerDevice.singleColorButtons = RGBA8_MAXALPHA(0,0,0);
     if (conDeviceType == 1)
     {
-        controllerDevice.colorLeftGrip = RGBA8_MAXALPHA(255,0,127);
-        controllerDevice.colorRightGrip = RGBA8_MAXALPHA(255,0,127);
+        controllerDevice.colorLeftGrip = RGBA8_MAXALPHA(0,0,0);
+        controllerDevice.colorRightGrip = RGBA8_MAXALPHA(0,0,0);
     }
     
-    controllerDevice.npadInterfaceType = HidNpadInterfaceType_Bluetooth;
+    controllerDevice.npadInterfaceType = HidNpadInterfaceType_USB;
 
     // Setup example controller state.
     controllerState.battery_level = 4; // Set battery charge to full.
@@ -162,10 +162,16 @@ void apply_fake_con_state(struct input_message message)
             fakeControllerList[i].controllerState.analog_stick_r.x = joyrx;
             fakeControllerList[i].controllerState.analog_stick_r.y = joyry;
             Result myResult;
+            char* fuck = (char*)malloc(sizeof(keys) + 20);
+            sprintf(fuck, "Received input %li", keys);
+            printToFile(fuck);
             // This function is causing all the issues in 12.0
             myResult = hiddbgSetHdlsState(fakeControllerList[i].controllerHandle, &fakeControllerList[i].controllerState);
             if (R_FAILED(myResult)) {
                 printToFile("Fatal Error while updating Controller State.");
+                char* out = (char*)malloc(sizeof(myResult) + 32);
+                sprintf(out, "hiddbgSetHdlsState(): 0x%x\n", myResult);
+                printToFile(out);
             }   
         }
     }

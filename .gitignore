@@ -13,3 +13,4 @@
 *.bat
 .vscode/c_cpp_properties.json
 test.py
+.vscode/settings.json
