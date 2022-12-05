@@ -5,6 +5,8 @@
 
 // Some of the code comes from hid-mitm
 
+static std::string log_buffer; 
+
 int FakeController::initialize(u16 conDeviceType)
 {
     if (isInitialized) return 0;
@@ -29,6 +31,10 @@ int FakeController::initialize(u16 conDeviceType)
             break;
 
     }
+    
+    char* devtypemessage = (char*)malloc(controllerDevice.deviceType + 20);
+    sprintf(devtypemessage, "device type is %d", controllerDevice.deviceType);
+    log_buffer = devtypemessage;
 
     // Set the controller colors. The grip colors are for Pro-Controller on [9.0.0+].
     controllerDevice.singleColorBody = RGBA8_MAXALPHA(255,0,220);
@@ -42,7 +48,7 @@ int FakeController::initialize(u16 conDeviceType)
     controllerDevice.npadInterfaceType = HidNpadInterfaceType_USB;
 
     // Setup example controller state.
-    controllerState.battery_level = 4; // Set battery charge to full.
+    //controllerState.battery_level = 4; // Set battery charge to full.
 
     if (conDeviceType == 1 || conDeviceType == 2)
     {
@@ -58,11 +64,11 @@ int FakeController::initialize(u16 conDeviceType)
     
     myResult = hiddbgAttachHdlsVirtualDevice(&controllerHandle, &controllerDevice);
     if (R_FAILED(myResult)) {
-        printToFile("Failed connecting controller... fuck");
+        log_buffer = "Failed connecting controller...";
         return -1;
     }
 
-    printToFile("Controller initialized!");
+    log_buffer = "Controller initialized!";
     isInitialized = true;
     return 0;
 }
@@ -73,11 +79,11 @@ int FakeController::deInitialize()
     Result myResult;
 
     controllerState = {0};
-    hiddbgSetHdlsState(controllerHandle, &controllerState);
+    //hiddbgSetHdlsState(controllerHandle, &controllerState);
     
     myResult = hiddbgDetachHdlsVirtualDevice(controllerHandle);
     if (R_FAILED(myResult)) {
-        printToFile("Fatal Error while detaching controller.");
+        log_buffer = "Fatal Error while detaching controller.";
     }
     controllerHandle = {0};
     controllerDevice = {0};
@@ -161,31 +167,36 @@ void apply_fake_con_state(struct input_message message)
             fakeControllerList[i].controllerState.analog_stick_l.y = joyly;
             fakeControllerList[i].controllerState.analog_stick_r.x = joyrx;
             fakeControllerList[i].controllerState.analog_stick_r.y = joyry;
+            if (fakeControllerList[i].controllerState.buttons != 0) {
+                char *out = new char[32];
+                snprintf(out, 32, "Received input %li", fakeControllerList[i].controllerState.buttons);
+                log_buffer = out;
+            }
+
+            const HiddbgDebugPadAutoPilotState* apstate = &fakeControllerList[i].controllerState;
+
             Result myResult;
-            char* fuck = (char*)malloc(sizeof(keys) + 20);
-            sprintf(fuck, "Received input %li", keys);
-            printToFile(fuck);
-            // This function is causing all the issues in 12.0
-            myResult = hiddbgSetHdlsState(fakeControllerList[i].controllerHandle, &fakeControllerList[i].controllerState);
+            myResult = hiddbgSetDebugPadAutoPilotState(apstate);
+
             if (R_FAILED(myResult)) {
-                printToFile("Fatal Error while updating Controller State.");
-                char* out = (char*)malloc(sizeof(myResult) + 32);
+                log_buffer = "Fatal Error while updating Controller State.";
+                char* out = new char[50];
                 sprintf(out, "hiddbgSetHdlsState(): 0x%x\n", myResult);
-                printToFile(out);
+                log_buffer = out;
             }   
         }
     }
-    
+
     return;
 }
 
-static Mutex pkgMutex;
+static Mutex pkgMutex, loggingMutex;
 static struct input_message fakeConsState;
 
 void networkThread(void* _)
 {
     struct input_message temporal_pkg;
-    printToFile("Starting Network Loop Thread!");
+    log_buffer = "Starting Network Loop Thread!";
     while (true)
     {
         int poll_res = poll_udp_input(&temporal_pkg);
@@ -204,5 +215,17 @@ void networkThread(void* _)
         mutexUnlock(&pkgMutex);
 
         svcSleepThread(-1);
+    }
+}
+
+void loggingThread(void* _) {
+    while (true) 
+    {
+        if (log_buffer != "") 
+        {
+            const char* output = log_buffer.c_str();
+            printToFile(output);
+            log_buffer = "";
+        }
     }
 }

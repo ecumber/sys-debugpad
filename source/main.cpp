@@ -185,7 +185,7 @@ int printToFile(const char* myString)
 
 // Main program entrypoint
 u64 mainLoopSleepTime = 50;
-static Thread network_thread;
+static Thread network_thread, logging_thread;
 int main(int argc, char* argv[])
 {
     // Initialization code can go here.
@@ -196,9 +196,11 @@ int main(int argc, char* argv[])
     printToFile("READY NEW!");
     printToFile("MEGA READY! :)");
     FakeController testController;
-    
+
     threadCreate(&network_thread, networkThread, NULL, NULL, 0x1000, 0x30, 3);
+    threadCreate(&logging_thread, loggingThread, NULL, NULL, 0x1000, 0x31, 4);
     threadStart(&network_thread);
+    threadStart(&logging_thread);
     
     while (appletMainLoop()) // Main loop
     {
