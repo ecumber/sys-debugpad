@@ -1,5 +1,5 @@
 # sys-hidplus
-A Nintendo Switch sysmodule to use up to 3 inputs over the network and useful to use with services such as Parsec for remote play
+A Nintendo Switch sysmodule that emulates a debug controller, used in the Mario Kart 8 Deluxe prototype and more
 
 
 # Disclaimer
@@ -26,24 +26,13 @@ You can modify the behaviour of the controller emulation on the python file by c
 
 
 # Known issues
-* Sticks are inverted when using Linux
-* Input lag is increased on demanding games such as Super Mario Odyssey
+* Causes a crash if the controller button is held for too long
 
-
-# Unsupported games
-* All games that require a gyroscope or the SL/SR buttons (For example, 1-2-Switch, Pokémon Let's Go or Super Mario Party)
-
-
-# Support
-The best way to get your questions answered is by asking me in Discord (Paskkkk#6441) or by asking on the gbatemp thread.
 
 
 # Special Thanks
+# PaskaPinishkes - original sysmodule
 * jakibaki - base and inspiration for this sysmodule (hid-mitm), a lot of the code comes from it
 * cathery - helping me with my dumb questions and issues
 * ReSwitched Discord Server - help in the support channels
 * **Everyone using this sysmodule - thanks a lot!**
-
-
-# Donations
-No, use your money to buy games for yourself or something idk
