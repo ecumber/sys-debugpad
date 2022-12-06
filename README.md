@@ -1,9 +1,12 @@
 # sys-hidplus
-A Nintendo Switch sysmodule that emulates a debug controller, used in the Mario Kart 8 Deluxe prototype and more
+A Nintendo Switch sysmodule that emulates a debug controller
 
+# Why does this exist?
+Some Switch developer units (SDEV) have a special controller port on the back. This port is actually meant for a Wii Classic Controller Pro, presumably because the port had existed for a while and was simpler to implement.
+Certain games such as the Mario Kart 8 Deluxe prototype have support for this controller and lock certain features behind it. While a game-specific cheat could be used to reroute debug controller to a normal one, the problem is it's game-specific and won't work for anything else. This sysmodule emulates a debug controller directly and works on any game that supports it.
 
 # Disclaimer
-Bugs occur and I'm in no way responsible of any damage caused by this sysmodule or its misuse. If you get any issue, please report it on the Issues tab or report it on the gbatemp thread.
+Bugs occur and I'm in no way responsible of any damage caused by this sysmodule or its misuse. If you get any issue, please report it on the Issues tab.
 
 
 # Instructions
@@ -31,7 +34,7 @@ You can modify the behaviour of the controller emulation on the python file by c
 
 
 # Special Thanks
-# PaskaPinishkes - original sysmodule
+* PaskaPinishkes - original sysmodule
 * jakibaki - base and inspiration for this sysmodule (hid-mitm), a lot of the code comes from it
 * cathery - helping me with my dumb questions and issues
 * ReSwitched Discord Server - help in the support channels
