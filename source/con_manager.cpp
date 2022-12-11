@@ -10,7 +10,6 @@ static std::string log_buffer;
 int FakeController::initialize(u16 conDeviceType)
 {
     if (isInitialized) return 0;
-    Result myResult;
     //printToFile("Controller initializing...");
 
     // Set the controller type to Pro-Controller, and set the npadInterfaceType.
@@ -19,15 +18,7 @@ int FakeController::initialize(u16 conDeviceType)
     switch(conDeviceType)
     {
         case 1:
-            controllerDevice.deviceType = HidDeviceType_DebugPad; // Pro Controller
-            break;
-        
-        case 2:
-            controllerDevice.deviceType = HidDeviceType_DebugPad; // Joy-Con Left
-            break;
-
-        case 3:
-            controllerDevice.deviceType = HidDeviceType_DebugPad; // Joy-Con Right
+            controllerDevice.deviceType = HidDeviceType_DebugPad;
             break;
 
     }
@@ -62,11 +53,11 @@ int FakeController::initialize(u16 conDeviceType)
         controllerState.analog_stick_r.y = -0x0;
     }
     
-    myResult = hiddbgAttachHdlsVirtualDevice(&controllerHandle, &controllerDevice);
-    if (R_FAILED(myResult)) {
-        log_buffer = "Failed connecting controller...";
-        return -1;
-    }
+    //myResult = hiddbgAttachHdlsVirtualDevice(&controllerHandle, &controllerDevice);
+    //if (R_FAILED(myResult)) {
+    //    log_buffer = "Failed connecting controller...";
+    //    return -1;
+    //}
 
     log_buffer = "Controller initialized!";
     isInitialized = true;
@@ -79,9 +70,8 @@ int FakeController::deInitialize()
     Result myResult;
 
     controllerState = {0};
-    //hiddbgSetHdlsState(controllerHandle, &controllerState);
     
-    myResult = hiddbgDetachHdlsVirtualDevice(controllerHandle);
+    myResult = hiddbgSetDebugPadAutoPilotState(&controllerState);
     if (R_FAILED(myResult)) {
         log_buffer = "Fatal Error while detaching controller.";
     }
@@ -156,12 +146,11 @@ void apply_fake_con_state(struct input_message message)
         else if (fakeControllerList[i].isInitialized && (conType < 1 || conType > 3))
         {
             fakeControllerList[i].deInitialize();
-            /*FakeController tempCon;
-            fakeControllerList[i] = tempCon;*/
         }
 
         if (fakeControllerList[i].isInitialized)
         {
+            fakeControllerList[i].controllerState.attributes = 1;
             fakeControllerList[i].controllerState.buttons = keys;
             fakeControllerList[i].controllerState.analog_stick_l.x = joylx;
             fakeControllerList[i].controllerState.analog_stick_l.y = joyly;
@@ -169,7 +158,7 @@ void apply_fake_con_state(struct input_message message)
             fakeControllerList[i].controllerState.analog_stick_r.y = joyry;
             if (fakeControllerList[i].controllerState.buttons != 0) {
                 char *out = new char[32];
-                snprintf(out, 32, "Received input %li", fakeControllerList[i].controllerState.buttons);
+                snprintf(out, 32, "Received input %i", fakeControllerList[i].controllerState.buttons);
                 log_buffer = out;
             }
 
@@ -190,7 +179,7 @@ void apply_fake_con_state(struct input_message message)
     return;
 }
 
-static Mutex pkgMutex, loggingMutex;
+static Mutex pkgMutex;
 static struct input_message fakeConsState;
 
 void networkThread(void* _)
